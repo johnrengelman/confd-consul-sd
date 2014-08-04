@@ -4,13 +4,19 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"net"
 	"os"
 
 	// "github.com/kelseyhightower/confd/backends"
+	"github.com/johnrengelman/confd-consul-sd/consul"
 	"github.com/kelseyhightower/confd/log"
+)
+
+var (
+	client *consul.Client
 )
 
 func main() {
@@ -42,12 +48,26 @@ func main() {
 		if err != nil {
 			continue
 		}
-		go handleRequest(conn)
+		go HandleRequest(conn)
 	}
 }
 
-func handleRequest(conn net.Conn) {
+func HandleRequest(conn net.Conn) {
 	log.Info("Handling request")
-	conn.Write([]byte("{\"status\": \"ok\"}"))
+	reader := bufio.NewReader(conn)
+	writer := bufio.NewWriter(conn)
+	prefix, err := reader.ReadString('\n')
+	if err != nil {
+		log.Error("Error handling request")
+		return
+	}
+	log.Info("Retrieving keys for prefix: " + prefix)
+
+	keys := RetrieveKeys(prefix)
+	writer.WriteString(keys)
 	conn.Close()
+}
+
+func RetrieveKeys(prefix string) string {
+	return "{}"
 }
