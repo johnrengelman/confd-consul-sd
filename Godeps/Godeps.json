@@ -1,0 +1,11 @@
+{
+	"ImportPath": "github.com/johnrengelman/confd-consul-sd",
+	"GoVersion": "go1.3",
+	"Deps": [
+		{
+			"ImportPath": "github.com/kelseyhightower/confd/log",
+			"Comment": "v0.5.0-4-g9b19fe5",
+			"Rev": "9b19fe5b9fda8d1573cde7c0f082988c16372f69"
+		}
+	]
+}
