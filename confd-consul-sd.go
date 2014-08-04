@@ -14,6 +14,7 @@ import (
 )
 
 var (
+	config       Config
 	debug        bool
 	quiet        bool
 	verbose      bool
@@ -23,12 +24,33 @@ var (
 	printVersion bool
 )
 
+// A Config structure is used to configure confd-consul-sd.
+type Config struct {
+	Debug     bool
+	Quiet     bool
+	Verbose   bool
+	Transport string
+	Port      int
+	Socket    string
+}
+
 func main() {
 	flag.Parse()
 	if printVersion {
 		fmt.Printf("confd-consul-sd %s\n", Version)
 		os.Exit(0)
 	}
+	config = Config{
+		Transport: "tcp",
+		Port:      6000,
+		Socket:    "/var/run/confd-consul-sd.sock",
+	}
+	processFlags()
+	// Configure logging.
+	log.SetQuiet(config.Quiet)
+	log.SetVerbose(config.Verbose)
+	log.SetDebug(config.Debug)
+
 	log.Notice("Starting confd-consul-sd")
 	ln, err := net.Listen("tcp", ":6000")
 	if err != nil {
@@ -53,6 +75,29 @@ func init() {
 	flag.IntVar(&port, "port", 6000, "the tcp port to listen on")
 	flag.StringVar(&socket, "socket", "/var/run/confd-consul-sd.sock", "Unix socket to listen on")
 	flag.BoolVar(&printVersion, "version", false, "print version and exit")
+}
+
+// processFlags iterates through each flag set on the command line and
+// overrides corresponding configuration settings.
+func processFlags() {
+	flag.Visit(setConfigFromFlag)
+}
+
+func setConfigFromFlag(f *flag.Flag) {
+	switch f.Name {
+	case "debug":
+		config.Debug = debug
+	case "quiet":
+		config.Quiet = quiet
+	case "verbose":
+		config.Verbose = verbose
+	case "transport":
+		config.Transport = transport
+	case "port":
+		config.Port = port
+	case "socket":
+		config.Socket = socket
+	}
 }
 
 func handleRequest(conn net.Conn) {
